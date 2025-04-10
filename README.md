@@ -1,6 +1,6 @@
 # 🔐 Authentication System with React + Redux Toolkit
 
-[Visualizar] (https://codesandbox.io/dashboard/repositories/github/p1zz4crypt/authentication)
+[Visualizar] (https://codesandbox.io/p/github/p1zz4crypt/authentication/main)
 
 ## 🚀 Project Overview
 
