@@ -1,0 +1,175 @@
+Proyecto de Autenticación con React, Vite, Redux Toolkit y React Router DOM
+
+Una página de inicio (Home) protegida
+Una página de login
+Protección de rutas
+
+** Manejo de estado de autenticación con Redux Toolkit **
+
+- Paso 1: Crear el proyecto con Vite
+npm create vite@latest auth-project -- --template react
+cd auth-project
+npm install
+
+- Paso 2: Instalar dependencias necesarias
+npm install @reduxjs/toolkit react-redux react-router-dom
+
+- Paso 3: Estructura de archivos
+
+src/
+├── app/
+│   ├── store.js
+├── features/
+│   ├── auth/
+│   │   ├── authSlice.js
+├── pages/
+│   ├── Home.jsx
+│   ├── Login.jsx
+├── components/
+│   ├── ProtectedRoute.jsx
+├── App.jsx
+├── main.jsx
+
+
+- Paso 4: Configurar Redux Toolkit
+Crea src/app/store.js:
+
+import { configureStore } from '@reduxjs/toolkit';
+import authReducer from '../features/auth/authSlice';
+
+export const store = configureStore({
+  reducer: {
+    auth: authReducer,
+  },
+});
+
+- Paso 5: Crear el slice de autenticación
+
+Crea src/features/auth/authSlice.js:
+import { createSlice } from '@reduxjs/toolkit';
+
+const initialState = {
+  user: null,
+  isAuthenticated: false,
+  status: 'idle', // 'idle' | 'loading' | 'succeeded' | 'failed'
+  error: null,
+};
+
+const authSlice = createSlice({
+  name: 'auth',
+  initialState,
+  reducers: {
+    loginSuccess: (state, action) => {
+      state.user = action.payload;
+      state.isAuthenticated = true;
+      state.status = 'succeeded';
+      state.error = null;
+    },
+    logout: (state) => {
+      state.user = null;
+      state.isAuthenticated = false;
+      state.status = 'idle';
+      state.error = null;
+    },
+    setError: (state, action) => {
+      state.error = action.payload;
+      state.status = 'failed';
+    },
+  },
+});
+
+export const { loginSuccess, logout, setError } = authSlice.actions;
+
+export default authSlice.reducer;
+
+- Paso 6: Crear el componente ProtectedRoute
+
+Crea src/components/ProtectedRoute.jsx:
+import { useSelector } from 'react-redux';
+import { Navigate, Outlet } from 'react-router-dom';
+
+const ProtectedRoute = () => {
+  const { isAuthenticated } = useSelector((state) => state.auth);
+
+  return isAuthenticated ? <Outlet /> : <Navigate to="/login" replace />;
+};
+
+export default ProtectedRoute;
+
+- Paso 7: Crear las páginas
+
+Crea src/pages/Home.jsx:
+import { useDispatch } from 'react-redux';
+import { logout } from '../features/auth/authSlice';
+
+const Home = () => {
+  const dispatch = useDispatch();
+
+  const handleLogout = () => {
+    dispatch(logout());
+  };
+
+  return (
+    <div>
+      <h1>Bienvenido a la página de inicio</h1>
+      <p>Esta página está protegida y solo se puede ver si estás autenticado.</p>
+      <button onClick={handleLogout}>Cerrar sesión</button>
+    </div>
+  );
+};
+
+export default Home;
+
+Crea src/pages/Login.jsx:
+import { useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
+import { loginSuccess, setError } from '../features/auth/authSlice';
+
+const Login = () => {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const { error } = useSelector((state) => state.auth);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    
+    // Validación simple (en un proyecto real harías una llamada a una API)
+    if (username === 'admin' && password === '12345') {
+      dispatch(loginSuccess({ username }));
+      navigate('/');
+    } else {
+      dispatch(setError('Credenciales incorrectas'));
+    }
+  };
+
+  return (
+    <div>
+      <h1>Iniciar sesión</h1>
+      {error && <p style={{ color: 'red' }}>{error}</p>}
+      <form onSubmit={handleSubmit}>
+        <div>
+          <label>Usuario:</label>
+          <input
+            type="text"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+          />
+        </div>
+        <div>
+          <label>Contraseña:</label>
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+        </div>
+        <button type="submit">Ingresar</button>
+      </form>
+    </div>
+  );
+};
+
+export default Login;
